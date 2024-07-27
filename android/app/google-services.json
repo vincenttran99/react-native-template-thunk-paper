@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "847702685489",
+    "project_id": "storm-area-22",
+    "storage_bucket": "storm-area-22.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:847702685489:android:2ffa834c77c45dd378e210",
+        "android_client_info": {
+          "package_name": "com.react_native_template_thunk_paper"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpp7MsNA7ZLM8hd9HELifr2N0nSKixijw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
