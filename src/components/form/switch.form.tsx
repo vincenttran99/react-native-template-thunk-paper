@@ -2,12 +2,12 @@ import {BStyle} from 'constants/system/ui/styles.constant';
 import React, {useCallback} from 'react';
 import {Control, RegisterOptions, useController} from 'react-hook-form';
 import {StyleProp, View, ViewStyle} from 'react-native';
-import {HelperText, TextInput} from 'react-native-paper';
+import {HelperText, Switch} from 'react-native-paper';
 
-interface IFTextInputProps extends React.ComponentProps<typeof TextInput> {
+interface IFSwitchProps extends React.ComponentProps<typeof Switch> {
   control: Control<any>;
   name: string;
-  defaultValue?: string;
+  defaultValue?: boolean;
   hint?: string;
   containerStyle?: StyleProp<ViewStyle>;
   rules?: Omit<
@@ -27,17 +27,17 @@ interface IFTextInputProps extends React.ComponentProps<typeof TextInput> {
  * @param props
  * @constructor
  */
-export default function FTextInput({
+export default function FSwitch({
   control,
   hint,
   rules,
-  defaultValue = '',
+  defaultValue = true,
   name,
-  onChangeText,
+  onValueChange,
   style,
   containerStyle = {},
   ...props
-}: IFTextInputProps): React.JSX.Element {
+}: IFSwitchProps): React.JSX.Element {
   const {field, fieldState, formState} = useController({
     control: control,
     defaultValue: defaultValue,
@@ -45,26 +45,20 @@ export default function FTextInput({
     rules,
   });
 
-  const onChangeTextOverride = useCallback(
-    (text: string) => {
-      field.onChange?.(text);
-      onChangeText?.(text);
+  const onValueChangeSwitch = useCallback(
+    (value: boolean) => {
+      field.onChange?.(value);
+      onValueChange?.(value);
     },
     [field.onChange],
   );
 
   return (
     <View style={[BStyle.fullWidth, containerStyle]}>
-      <TextInput
-        mode={'outlined'}
-        onChangeText={onChangeTextOverride}
-        allowFontScaling={false}
-        maxFontSizeMultiplier={1}
-        {...props}
-        style={[style, {textAlign: 'auto'}]}
-        error={fieldState.invalid}
+      <Switch
         value={field.value}
-        ref={field.ref}
+        onValueChange={onValueChangeSwitch}
+        {...props}
       />
 
       {hint ? (

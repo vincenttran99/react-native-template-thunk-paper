@@ -1,15 +1,25 @@
-import React from "react";
-import {TextInput} from "react-native-paper";
+import React from 'react';
+import {TextInput} from 'react-native-paper';
 
-interface IBTextInputProps extends React.ComponentProps<typeof TextInput> {
-
-}
+interface IBTextInputProps extends React.ComponentProps<typeof TextInput> {}
 
 /**
  * BTextInput is Base TextInput
  * @param props
+ * @param ref
  * @constructor
  */
-export default function BTextInput(props: IBTextInputProps): React.JSX.Element {
-  return <TextInput {...props} />;
-}
+const BTextInput = React.forwardRef<TextInput, IBTextInputProps>(
+  (props, ref) => {
+    return (
+      <TextInput
+        ref={ref}
+        allowFontScaling={false}
+        maxFontSizeMultiplier={1}
+        {...props}
+      />
+    );
+  },
+);
+
+export default BTextInput;

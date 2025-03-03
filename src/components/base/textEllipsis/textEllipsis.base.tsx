@@ -1,10 +1,21 @@
-import React, {memo, useCallback, useLayoutEffect, useRef, useState} from "react";
-import {Text} from "react-native-paper";
-import {NativeSyntheticEvent, StyleProp, StyleSheet, TextLayoutEventData, TextStyle} from "react-native";
-import BText from "components/base/text.base";
-import languages from "constants/system/languages";
+import BText from 'components/base/text.base';
+import languages from 'constants/system/languages';
+import React, {
+  memo,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
+import {
+  NativeSyntheticEvent,
+  StyleProp,
+  StyleSheet,
+  TextLayoutEventData,
+  TextStyle,
+} from 'react-native';
 
-interface IBTextProps extends React.ComponentProps<typeof Text> {
+interface IBTextProps extends React.ComponentProps<typeof BText> {
   numberOfLines: number;
   children: string;
   styleReadMoreText?: StyleProp<TextStyle>;
@@ -12,6 +23,7 @@ interface IBTextProps extends React.ComponentProps<typeof Text> {
 
 /**
  * You should provide a width for this component.
+ * Must use const for this component for best ex
  * @param numberOfLines
  * @param onTextLayout
  * @param children
@@ -20,15 +32,14 @@ interface IBTextProps extends React.ComponentProps<typeof Text> {
  * @param props
  * @constructor
  */
-const BTextEllipsis = ({
-                                        numberOfLines,
-                                        onTextLayout,
-                                        children,
-                                        styleReadMoreText,
-                                        style,
-                                        ...props
-                                      }: IBTextProps): React.JSX.Element => {
-
+const BTextEllipsisComponent = ({
+  numberOfLines,
+  onTextLayout,
+  children,
+  styleReadMoreText,
+  style,
+  ...props
+}: IBTextProps): React.JSX.Element => {
   const [isNeedReadMore, setIsNeedReadMore] = useState(false);
   const [_, setStateForReRender] = useState(false);
   const [isShowAll, setIsShowAll] = useState(false);
@@ -42,39 +53,43 @@ const BTextEllipsis = ({
     isPropsChangeRef.current = true;
     textRef.current = children;
 
-    return (() => {
+    return () => {
       isDoneCalculateRef.current = false;
-    });
+    };
   }, [children, style, styleReadMoreText, numberOfLines]);
 
   useLayoutEffect(() => {
     lengthNeedToCutRef.current = languages.showMore.length + 6;
   }, [languages.showMore]);
 
-  const onTextLayoutOverride = useCallback((event: NativeSyntheticEvent<TextLayoutEventData>) => {
-    onTextLayout?.(event);
+  const onTextLayoutOverride = useCallback(
+    (event: NativeSyntheticEvent<TextLayoutEventData>) => {
+      onTextLayout?.(event);
 
-    if (isDoneCalculateRef.current) {
-      return;
-    }
-
-    isDoneCalculateRef.current = true;
-    isPropsChangeRef.current = false;
-    if (event.nativeEvent?.lines?.length > numberOfLines) {
-      let shortText = "";
-      for (let i = 0; i < numberOfLines; i++) {
-        shortText = shortText.concat(event.nativeEvent?.lines[i].text);
+      if (isDoneCalculateRef.current) {
+        return;
       }
 
-      shortTextRef.current = shortText.slice(0, -lengthNeedToCutRef.current) + "... ";
-      textRef.current = shortTextRef.current;
-      setIsNeedReadMore(true);
-    } else {
-      setIsNeedReadMore(false);
-    }
+      isDoneCalculateRef.current = true;
+      isPropsChangeRef.current = false;
+      if (event.nativeEvent?.lines?.length > numberOfLines) {
+        let shortText = '';
+        for (let i = 0; i < numberOfLines; i++) {
+          shortText = shortText.concat(event.nativeEvent?.lines[i].text);
+        }
 
-    setStateForReRender(old => !old);
-  }, [onTextLayout, numberOfLines]);
+        shortTextRef.current =
+          shortText.slice(0, -lengthNeedToCutRef.current) + '... ';
+        textRef.current = shortTextRef.current;
+        setIsNeedReadMore(true);
+      } else {
+        setIsNeedReadMore(false);
+      }
+
+      setStateForReRender(old => !old);
+    },
+    [onTextLayout, numberOfLines],
+  );
 
   const switchShowStatus = useCallback(() => {
     if (isShowAll) {
@@ -87,19 +102,30 @@ const BTextEllipsis = ({
   }, [isShowAll, children]);
 
   return (
-    <BText onTextLayout={onTextLayoutOverride}
-           numberOfLines={isNeedReadMore && !isPropsChangeRef.current ? undefined : numberOfLines}
-           style={[{ width: "100%" }, style, { opacity: isDoneCalculateRef.current ? StyleSheet.flatten(style || {})?.opacity : 0 }]}
-           {...props} >
-      {textRef.current}
-      {
-        isNeedReadMore &&
-        <BText onPress={switchShowStatus} style={styleReadMoreText}>
-          {isShowAll ? " " + languages.showLess : languages.showMore}
-        </BText>
+    <BText
+      onTextLayout={onTextLayoutOverride}
+      numberOfLines={
+        isNeedReadMore && !isPropsChangeRef.current ? undefined : numberOfLines
       }
+      style={[
+        {width: '100%'},
+        style,
+        {
+          opacity: isDoneCalculateRef.current
+            ? StyleSheet.flatten(style || {})?.opacity
+            : 0,
+        },
+      ]}
+      {...props}>
+      {textRef.current}
+      {isNeedReadMore ? (
+        <BText onPress={switchShowStatus} style={styleReadMoreText}>
+          {isShowAll ? ' ' + languages.showLess : languages.showMore}
+        </BText>
+      ) : null}
     </BText>
   );
-}
+};
 
-export default memo(BTextEllipsis)
+const BTextEllipsis = memo(BTextEllipsisComponent);
+export default BTextEllipsis;

@@ -1,56 +1,60 @@
-import React, {forwardRef, memo, useCallback, useRef} from "react";
-import {Button} from "react-native-paper";
-import {GestureResponderEvent} from "react-native";
-import FirebaseHelper from "helpers/firebase.helper";
-import FirebaseConstant from "constants/firebase.constant";
-import Animated from "react-native-reanimated";
-import {FontSize, MHS} from "constants/system/ui/sizes.ui.constant";
-import isEqual from "react-fast-compare";
+import {EAnalyticsEvent} from 'constants/firebase.constant';
+import {FontSize, MHS} from 'constants/system/ui/sizes.ui.constant';
+import FirebaseHelper from 'helpers/firebase.helper';
+import React, {forwardRef, useCallback, useRef} from 'react';
+import {GestureResponderEvent} from 'react-native';
+import {Button} from 'react-native-paper';
+import Animated from 'react-native-reanimated';
 
-interface IBButtonProps extends React.ComponentProps<typeof Button> {
-    eventKey?: string;
-    logWithTime?: boolean;
-    firstLogOnly?: boolean;
-    size?: "large" | "big" | "medium" | "small" | "tiny" | "micro" | "nano"
+export interface IBButtonProps extends React.ComponentProps<typeof Button> {
+  eventKey?: string;
+  logWithTime?: boolean;
+  firstLogOnly?: boolean;
+  size?: 'large' | 'big' | 'medium' | 'small' | 'tiny' | 'micro' | 'nano';
+  noMarginLabel?: boolean;
 }
 
 const BUTTON_STYLE = {
-    large: {
-        marginHorizontal: MHS._28,
-        marginVertical: MHS._14,
-        fontSize: FontSize._16,
-    },
-    big: {
-        marginHorizontal: MHS._26,
-        marginVertical: MHS._12,
-        fontSize: FontSize._15,
-    },
-    medium: {
-        marginHorizontal: MHS._24,
-        marginVertical: MHS._10,
-        fontSize: FontSize._14,
-    },
-    small: {
-        marginHorizontal: MHS._22,
-        marginVertical: MHS._8,
-        fontSize: FontSize._13,
-    },
-    tiny: {
-        marginHorizontal: MHS._20,
-        marginVertical: MHS._6,
-        fontSize: FontSize._12,
-    },
-    micro: {
-        marginHorizontal: MHS._18,
-        marginVertical: MHS._4,
-        fontSize: FontSize._11,
-    },
-    nano: {
-        marginHorizontal: MHS._16,
-        marginVertical: MHS._2,
-        fontSize: FontSize._10,
-    },
-}
+  large: {
+    marginHorizontal: MHS._28,
+    marginVertical: MHS._14,
+    fontSize: FontSize._16,
+  },
+  big: {
+    marginHorizontal: MHS._26,
+    marginVertical: MHS._12,
+    fontSize: FontSize._15,
+  },
+  medium: {
+    marginHorizontal: MHS._24,
+    marginVertical: MHS._10,
+    fontSize: FontSize._14,
+  },
+  small: {
+    marginHorizontal: MHS._22,
+    marginVertical: MHS._8,
+    fontSize: FontSize._13,
+  },
+  tiny: {
+    marginHorizontal: MHS._20,
+    marginVertical: MHS._6,
+    fontSize: FontSize._12,
+  },
+  micro: {
+    marginHorizontal: MHS._18,
+    marginVertical: MHS._4,
+    fontSize: FontSize._11,
+  },
+  nano: {
+    marginHorizontal: MHS._16,
+    marginVertical: MHS._2,
+    fontSize: FontSize._10,
+  },
+  noMarginLabel: {
+    marginHorizontal: 0,
+    marginVertical: 0,
+  },
+};
 
 /**
  * A custom button component that extends the functionality of the React Native Paper Button component.
@@ -64,45 +68,71 @@ const BUTTON_STYLE = {
  * @param {boolean} props.firstLogOnly - Whether to only log the event once.
  * @returns {React.JSX.Element} The rendered BButton component.
  */
-const BButton = (({
-                      onPress,
-                      onLongPress,
-                      eventKey,
-                      logWithTime = false,
-                      firstLogOnly = true,
-                      size = "medium",
-                      labelStyle,
-                      ...props
-                  }: IBButtonProps, _: any): React.JSX.Element => {
+const BButton = (
+  {
+    onPress,
+    onLongPress,
+    eventKey,
+    logWithTime = false,
+    firstLogOnly = true,
+    size = 'medium',
+    labelStyle,
+    noMarginLabel,
+    ...props
+  }: IBButtonProps,
+  _: any,
+): React.JSX.Element => {
+  const isAlreadyLogged = useRef<boolean>(false);
 
-    const isAlreadyLogged = useRef<boolean>(false);
+  const onPressButton = useCallback(
+    (e: GestureResponderEvent) => {
+      if (
+        eventKey &&
+        ((firstLogOnly && !isAlreadyLogged.current) || !firstLogOnly)
+      ) {
+        isAlreadyLogged.current = false;
+        FirebaseHelper.logEventAnalytics({
+          event: `${EAnalyticsEvent.BTN}_${eventKey}`,
+          logWithTime,
+        });
+      }
+      onPress?.(e);
+    },
+    [onPress, eventKey, firstLogOnly],
+  );
 
-    const onPressButton = useCallback((e: GestureResponderEvent) => {
-        if (eventKey && ((firstLogOnly && !isAlreadyLogged.current) || !firstLogOnly)) {
-            isAlreadyLogged.current = false;
-            FirebaseHelper.logEventAnalytics({
-                event: `${FirebaseConstant.EAnalyticsEvent.BTN}_${eventKey}`,
-                logWithTime
-            });
-        }
-        onPress?.(e);
-    }, [onPress, eventKey, firstLogOnly]);
+  const onLongPressButton = useCallback(
+    (e: GestureResponderEvent) => {
+      if (
+        eventKey &&
+        ((firstLogOnly && !isAlreadyLogged.current) || !firstLogOnly)
+      ) {
+        isAlreadyLogged.current = false;
+        FirebaseHelper.logEventAnalytics({
+          event: `${EAnalyticsEvent.BTN}_${eventKey}_l`,
+          logWithTime,
+        });
+      }
+      onLongPress?.(e);
+    },
+    [onLongPress, eventKey, firstLogOnly],
+  );
 
-    const onLongPressButton = useCallback((e: GestureResponderEvent) => {
-        if (eventKey && ((firstLogOnly && !isAlreadyLogged.current) || !firstLogOnly)) {
-            isAlreadyLogged.current = false;
-            FirebaseHelper.logEventAnalytics({
-                event: `${FirebaseConstant.EAnalyticsEvent.BTN}_${eventKey}_l`,
-                logWithTime
-            });
-        }
-        onLongPress?.(e);
-    }, [onLongPress, eventKey, firstLogOnly]);
+  return (
+    <Button
+      onPress={onPressButton}
+      onLongPress={onLongPressButton}
+      {...props}
+      children={props.children}
+      maxFontSizeMultiplier={1}
+      labelStyle={[
+        BUTTON_STYLE[size],
+        noMarginLabel ? BUTTON_STYLE.noMarginLabel : {},
+        labelStyle,
+      ]}
+    />
+  );
+};
 
-    return <Button onPress={onPressButton} onLongPress={onLongPressButton} {...props} children={props.children}
-                   labelStyle={[labelStyle, BUTTON_STYLE[size]]}/>;
-})
-
-export const BButtonAni = Animated.createAnimatedComponent(forwardRef(BButton))
-export default memo(BButton, isEqual)
-
+export const BButtonAni = Animated.createAnimatedComponent(forwardRef(BButton));
+export default BButton;

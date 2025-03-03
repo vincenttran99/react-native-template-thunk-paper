@@ -1,14 +1,14 @@
-import React, {forwardRef, useCallback, useRef} from "react";
-import {IconButton} from "react-native-paper";
-import {GestureResponderEvent} from "react-native";
-import FirebaseHelper from "helpers/firebase.helper";
-import FirebaseConstant from "constants/firebase.constant";
-import Animated from "react-native-reanimated";
+import {EAnalyticsEvent} from 'constants/firebase.constant';
+import FirebaseHelper from 'helpers/firebase.helper';
+import React, {forwardRef, useCallback, useRef} from 'react';
+import {GestureResponderEvent} from 'react-native';
+import {IconButton} from 'react-native-paper';
+import Animated from 'react-native-reanimated';
 
 interface IBIconButtonProps extends React.ComponentProps<typeof IconButton> {
-    eventKey?: string;
-    logWithTime?: boolean;
-    firstLogOnly?: boolean;
+  eventKey?: string;
+  logWithTime?: boolean;
+  firstLogOnly?: boolean;
 }
 
 /**
@@ -23,42 +23,63 @@ interface IBIconButtonProps extends React.ComponentProps<typeof IconButton> {
  * @param {boolean} props.firstLogOnly - Whether to only log the event once.
  * @returns {React.JSX.Element} The rendered BButton component.
  */
-const BIconButton = (({
-                          onPress,
-                          onLongPress,
-                          eventKey,
-                          logWithTime = true,
-                          firstLogOnly = true,
-                          ...props
-                      }: IBIconButtonProps, _: any) => {
+const BIconButton = (
+  {
+    onPress,
+    onLongPress,
+    eventKey,
+    logWithTime = false,
+    firstLogOnly = true,
+    ...props
+  }: IBIconButtonProps,
+  _: any,
+) => {
+  const isAlreadyLogged = useRef<boolean>(false);
 
-    const isAlreadyLogged = useRef<boolean>(false);
+  const onPressButton = useCallback(
+    (e: GestureResponderEvent) => {
+      if (
+        eventKey &&
+        ((firstLogOnly && !isAlreadyLogged.current) || !firstLogOnly)
+      ) {
+        isAlreadyLogged.current = false;
+        FirebaseHelper.logEventAnalytics({
+          event: `${EAnalyticsEvent.BTN}_${eventKey}`,
+          logWithTime,
+        });
+      }
+      onPress?.(e);
+    },
+    [onPress, eventKey, firstLogOnly],
+  );
 
-    const onPressButton = useCallback((e: GestureResponderEvent) => {
-        if (eventKey && ((firstLogOnly && !isAlreadyLogged.current) || !firstLogOnly)) {
-            isAlreadyLogged.current = false;
-            FirebaseHelper.logEventAnalytics({
-                event: `${FirebaseConstant.EAnalyticsEvent.BTN}_${eventKey}`,
-                logWithTime
-            });
-        }
-        onPress?.(e);
-    }, [onPress, eventKey, firstLogOnly]);
+  const onLongPressButton = useCallback(
+    (e: GestureResponderEvent) => {
+      if (
+        eventKey &&
+        ((firstLogOnly && !isAlreadyLogged.current) || !firstLogOnly)
+      ) {
+        isAlreadyLogged.current = false;
+        FirebaseHelper.logEventAnalytics({
+          event: `${EAnalyticsEvent.BTN}_${eventKey}_l`,
+          logWithTime,
+        });
+      }
+      onLongPress?.(e);
+    },
+    [onLongPress, eventKey, firstLogOnly],
+  );
 
-    const onLongPressButton = useCallback((e: GestureResponderEvent) => {
-        if (eventKey && ((firstLogOnly && !isAlreadyLogged.current) || !firstLogOnly)) {
-            isAlreadyLogged.current = false;
-            FirebaseHelper.logEventAnalytics({
-                event: `${FirebaseConstant.EAnalyticsEvent.BTN}_${eventKey}_l`,
-                logWithTime
-            });
-        }
-        onLongPress?.(e);
-    }, [onLongPress, eventKey, firstLogOnly]);
+  return (
+    <IconButton
+      onPress={onPressButton}
+      onLongPress={onLongPressButton}
+      {...props}
+    />
+  );
+};
 
-    return <IconButton onPress={onPressButton} onLongPress={onLongPressButton} {...props} />;
-})
-
-
-export const BIconButtonAni = Animated.createAnimatedComponent(forwardRef(BIconButton))
+export const BIconButtonAni = Animated.createAnimatedComponent(
+  forwardRef(BIconButton),
+);
 export default BIconButton;

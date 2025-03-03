@@ -1,20 +1,64 @@
 export default {
-  hello: "Hello",
-  showMore: "Show more",
-  showLess: "Show less",
-  somethingWentWrong: "Something Went Wrong",
+  hello: 'Hello',
+  showMore: 'Show more',
+  showLess: 'Show less',
+  somethingWentWrong: 'Something Went Wrong',
   home: {
-    home: "Home"
+    home: 'Home',
   },
-  logsBug:{
-    logs: "Logs",
-    updated:"Updated",
-    deleted:"Deleted",
+  base: {
+    chose: 'Chọn',
+    choosePhotos: 'Chọn ảnh',
+    continue: 'Tiếp tục',
+    login: 'Đăng nhập',
+    logout: 'Đăng xuất',
+    signup: 'Đăng ký',
+    share: 'Chia sẻ',
+    copied: 'Đã sao chép',
+    hide: 'Ẩn',
+    complete: 'Hoàn thành',
+    copy: 'Sao chép',
+    delete: 'Xoá',
+    downloaded: 'Đã tải xuống',
+    errorDownloaded: 'Tải xuống thất bại',
+    close: 'Đóng',
+    default: 'Mặc định',
+    update: 'Cập nhật',
+    confirm: 'Xác nhận',
+    gotIt: 'Tôi hiểu',
+    ok: 'OK',
+    add: 'Thêm',
+    yesterday: 'Hôm qua',
+    needPermission: 'Cần cấp quyền',
+    needPermissionCamera:
+      'Ứng dụng cần quyền sử dụng máy ảnh. Truy cập vào cài đặt và cấp quyền.',
+    goToSetting: 'Mở cài đặt',
+    search: 'Tìm kiếm',
+    listEmpty: 'Danh sách rỗng',
+    cancel: 'Huỷ',
+    save: 'Lưu',
+    ignore: 'Bỏ qua',
+    invalid: 'Không hợp lệ',
+    notEmpty: 'Không được trống',
+    notFount: 'Không tìm thấy',
+    back: 'Quay lại',
+    password: 'Mật khẩu',
+    showMore: 'Xem thêm',
+    showLess: 'Ẩn bớt',
   },
-  detailLogsBug:{
-    detail:"Detail"
+  system: {
+    captureAgain: 'Chụp lại',
+    imagesSelected: '{count} ảnh đã được chọn',
   },
-  releaseLogs:{
-    logs:"Logs"
-  }
+  logsBug: {
+    logs: 'Logs',
+    updated: 'Updated',
+    deleted: 'Deleted',
+  },
+  detailLogsBug: {
+    detail: 'Detail',
+  },
+  releaseLogs: {
+    logs: 'Logs',
+  },
 };

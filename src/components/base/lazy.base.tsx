@@ -1,35 +1,32 @@
-import React, {useEffect, useState} from "react";
-import {ViewProps} from "react-native";
-import {ActivityIndicator} from "react-native-paper";
+import React, {useEffect, useState} from 'react';
+import {ViewProps} from 'react-native';
+import {ActivityIndicator} from 'react-native-paper';
 
 interface IBLazyProps extends ViewProps {
-    timeRender: number;
+  timeRender: number;
+  haveIndicator?: boolean;
 }
 
-const BLazy = (props: IBLazyProps) => {
-    const [allowRender, setAllowRender] = useState(false);
+const BLazy = ({haveIndicator = true, ...props}: IBLazyProps) => {
+  const [allowRender, setAllowRender] = useState(false);
 
-    useEffect(() => {
-        let timeout = setTimeout(() => {
-            setAllowRender(true);
-        }, props.timeRender);
+  useEffect(() => {
+    let timeout = setTimeout(() => {
+      setAllowRender(true);
+    }, props.timeRender);
 
-        return (() => {
-            if (timeout) {
-                clearTimeout(timeout);
-            }
-        });
-    }, []);
+    return () => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+    };
+  }, []);
 
-    if (!allowRender)
-        return <ActivityIndicator/>;
+  if (!allowRender) {
+    return haveIndicator ? <ActivityIndicator /> : null;
+  }
 
-    return (
-        <>
-            {props.children}
-        </>
-    );
+  return props.children;
 };
-
 
 export default BLazy;

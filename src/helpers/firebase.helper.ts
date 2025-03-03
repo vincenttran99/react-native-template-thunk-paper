@@ -1,20 +1,19 @@
 import analytics, {firebase} from '@react-native-firebase/analytics';
-import Config from "react-native-config";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import {TIMESTAMP_LAST_SCREEN_OPENING} from "helpers/navigation.helper";
-import firestore from "@react-native-firebase/firestore";
-import GlobalHelper from "helpers/globalHelper";
-import {Device} from "constants/system/device.constant";
-import FirebaseConstant from "constants/firebase.constant";
+import Config from 'react-native-config';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import {TIMESTAMP_LAST_SCREEN_OPENING} from 'helpers/navigation.helper';
+import firestore from '@react-native-firebase/firestore';
+import GlobalHelper from 'helpers/globalHelper';
+import {Device} from 'constants/system/device.constant';
 import storage from '@react-native-firebase/storage';
-import StorageHelper from "helpers/storage.helper";
-import {MMKV} from "react-native-mmkv";
-import FileHelper from "helpers/file.helper";
-import {EEnvironment} from "configs";
+import StorageHelper from 'helpers/storage.helper';
+import {MMKV} from 'react-native-mmkv';
+import FileHelper from 'helpers/file.helper';
+import {EEnvironment} from 'configs';
+import {ETypeOfBug} from 'constants/firebase.constant';
 
-
-dayjs.extend(utc)
+dayjs.extend(utc);
 // import notifee, {EventType} from "@notifee/react-native";
 // import messaging from "@react-native-firebase/messaging";
 // import getStore from "configs/store.config";
@@ -402,127 +401,168 @@ dayjs.extend(utc)
 //
 
 namespace FirebaseHelper {
-
-    /**
-     * File
-     */
-    export async function updateFile(filePath: string, folderName: string, fileName?: string): Promise<string> {
-        let reference = storage().ref(`/${folderName}/${fileName || (dayjs.utc().format(`img_HH_mm_SSS_DD_MM_YY`) + (FileHelper.getFileExtension(filePath) && ("." + FileHelper.getFileExtension(filePath))))}`);
-        return await reference.putFile(filePath)
-            .then(async (result) => {
-                if(result.state === "success"){
-                    return await reference.getDownloadURL()
-                }
-                return ""
-            }).catch(()=>{
-                return ""
-            })
-    }
-
-
-    /**
-     * Logs
-     */
-    export function logEventAnalytics({event, dataObj = {}, logWithTime = false}: {
-        event: string,
-        dataObj?: object,
-        logWithTime?: boolean
-    }) {
-        try {
-            if (!__DEV__ && Config.LOG_EVENT_TO_FIREBASE?.toLowerCase() === "true") {
-                if (logWithTime) {
-                    event = `${event}_${dayjs(TIMESTAMP_LAST_SCREEN_OPENING).diff(dayjs(), "second")}`
-                }
-                analytics().logEvent(event, dataObj);
-            }
-        } catch (error) {
-
+  /**
+   * File
+   */
+  export async function updateFile(
+    filePath: string,
+    folderName: string,
+    fileName?: string,
+  ): Promise<string> {
+    let reference = storage().ref(
+      `/${folderName}/${
+        fileName ||
+        dayjs.utc().format('img_HH_mm_SSS_DD_MM_YY') +
+          (FileHelper.getFileExtension(filePath) &&
+            '.' + FileHelper.getFileExtension(filePath))
+      }`,
+    );
+    return await reference
+      .putFile(filePath)
+      .then(async result => {
+        if (result.state === 'success') {
+          return await reference.getDownloadURL();
         }
+        return '';
+      })
+      .catch(() => {
+        return '';
+      });
+  }
+
+  /**
+   * Logs
+   */
+  export function logEventAnalytics({
+    event,
+    dataObj = {},
+    logWithTime = false,
+  }: {
+    event: string;
+    dataObj?: object;
+    logWithTime?: boolean;
+  }) {
+    try {
+      if (!__DEV__ && Config.LOG_EVENT_TO_FIREBASE?.toLowerCase() === 'true') {
+        if (logWithTime) {
+          event = `${event}_${dayjs(TIMESTAMP_LAST_SCREEN_OPENING).diff(
+            dayjs(),
+            'second',
+          )}`;
+        }
+        analytics().logEvent(event, dataObj);
+      }
+    } catch (error) {}
+  }
+
+  export function logScreenView(screen: string) {
+    firebase
+      .analytics()
+      .logScreenView({
+        screen_name: screen,
+        screen_class: screen,
+      })
+      .catch(console.log);
+  }
+
+  export async function createLogBug(
+    error: string,
+    stackTrace: string,
+    typeError: 'api' | 'crash',
+    currentScreen: string,
+  ) {
+    if (
+      __DEV__ ||
+      !(Config.LOG_USER_BUGS_TO_FIREBASE?.toLowerCase() === 'true')
+    ) {
+      return;
     }
 
-    export function logScreenView(screen: string) {
-        firebase.analytics().logScreenView({
-            screen_name: screen,
-            screen_class: screen
-        }).catch(console.log);
+    if (!error && !StorageHelper.getBugDevice()) {
+      return;
     }
 
-
-    export async function createLogBug(error: string, stackTrace: string, typeError: "api" | "crash", currentScreen: string) {
-        if (__DEV__ || !(Config.LOG_USER_BUGS_TO_FIREBASE?.toLowerCase() === "true")) return;
-
-        if (!error && !StorageHelper.getBugDevice()) return;
-
-        //check new log
-        const oldLog = await firestore().collection("Bugs").doc(currentScreen + dayjs.utc().format("_DD_MM_YY")).get();
-        if (oldLog.exists) return;
-        let checkDoneAddBug = false;
-
-        let timeMark = new Date().getTime();
-
-        GlobalHelper.ViewShotRef?.current.capture().then(async (uri: string) => {
-            await updateFile(
-                Device.isIos ? uri?.replace("file://", "") : uri,
-                "screenshots",
-                timeMark + ".jpg"
-            )
-                .then(async (screenShotUrl: string) => {
-                    await firestore()
-                        .collection("Bugs")
-                        .doc(currentScreen + dayjs.utc().format("_DD_MM_YY"))
-                        .set({
-                            device: StorageHelper.getBugDevice(),
-                            status: FirebaseConstant.ETypeOfBug.New,
-                            user: StorageHelper.getBugOwnerId(),
-                            time: timeMark,
-                            isDevSite: (new MMKV().getString("env") || (__DEV__ ? EEnvironment.DEVELOP : EEnvironment.PRODUCT)) === EEnvironment.DEVELOP,
-                            detail: StorageHelper.getBugLog(),
-                            type: typeError,
-                            error: error,
-                            stackTrace: stackTrace,
-                            screenShot: screenShotUrl
-                        })
-                        .then(() => {
-                            console.log("Bug added!");
-                            checkDoneAddBug = true;
-                        })
-                        .catch((error) => {
-                            console.log(error, "kdfmene")
-                        });
-                })
-                .catch((error: any) => {
-                    console.log(error, "ajsdjhasd")
-                })
-
-            if (!checkDoneAddBug) {
-                firestore()
-                    .collection("Bugs")
-                    .doc(currentScreen + dayjs.utc().format("_DD_MM_YY"))
-                    .set({
-                        device: StorageHelper.getBugDevice(),
-                        status: FirebaseConstant.ETypeOfBug.New,
-                        user: StorageHelper.getBugOwnerId(),
-                        time: timeMark,
-                        isDevSite: (new MMKV().getString("env") || (__DEV__ ? EEnvironment.DEVELOP : EEnvironment.PRODUCT)) === EEnvironment.DEVELOP,
-                        detail: StorageHelper.getBugLog(),
-                        type: typeError,
-                        error: error,
-                        stackTrace: stackTrace
-                    })
-                    .then(() => {
-                        console.log("Bug added!");
-                    })
-                    .catch((error) => {
-                        console.log(error, "sdjsf")
-                    });
-            }
-        }).catch((error: any) => {
-            console.log(error, "errorjmdbmvb")
-        })
-
-
+    //check new log
+    const oldLog = await firestore()
+      .collection('Bugs')
+      .doc(currentScreen + dayjs.utc().format('_DD_MM_YY'))
+      .get();
+    if (oldLog.exists) {
+      return;
     }
+    let checkDoneAddBug = false;
 
+    let timeMark = new Date().getTime();
+
+    GlobalHelper.ViewShotRef?.current
+      .capture()
+      .then(async (uri: string) => {
+        await updateFile(
+          Device.isIos ? uri?.replace('file://', '') : uri,
+          'screenshots',
+          timeMark + '.jpg',
+        )
+          .then(async (screenShotUrl: string) => {
+            await firestore()
+              .collection('Bugs')
+              .doc(currentScreen + dayjs.utc().format('_DD_MM_YY'))
+              .set({
+                device: StorageHelper.getBugDevice(),
+                status: ETypeOfBug.New,
+                user: StorageHelper.getBugOwnerId(),
+                time: timeMark,
+                isDevSite:
+                  (new MMKV().getString('env') ||
+                    (__DEV__ ? EEnvironment.DEVELOP : EEnvironment.PRODUCT)) ===
+                  EEnvironment.DEVELOP,
+                detail: StorageHelper.getBugLog(),
+                type: typeError,
+                error: error,
+                stackTrace: stackTrace,
+                screenShot: screenShotUrl,
+              })
+              .then(() => {
+                console.log('Bug added!');
+                checkDoneAddBug = true;
+              })
+              .catch(error => {
+                console.log(error, 'kdfmene');
+              });
+          })
+          .catch((error: any) => {
+            console.log(error, 'ajsdjhasd');
+          });
+
+        if (!checkDoneAddBug) {
+          firestore()
+            .collection('Bugs')
+            .doc(currentScreen + dayjs.utc().format('_DD_MM_YY'))
+            .set({
+              device: StorageHelper.getBugDevice(),
+              status: ETypeOfBug.New,
+              user: StorageHelper.getBugOwnerId(),
+              time: timeMark,
+              isDevSite:
+                (new MMKV().getString('env') ||
+                  (__DEV__ ? EEnvironment.DEVELOP : EEnvironment.PRODUCT)) ===
+                EEnvironment.DEVELOP,
+              detail: StorageHelper.getBugLog(),
+              type: typeError,
+              error: error,
+              stackTrace: stackTrace,
+            })
+            .then(() => {
+              console.log('Bug added!');
+            })
+            .catch(error => {
+              console.log(error, 'sdjsf');
+            });
+        }
+      })
+      .catch((error: any) => {
+        console.log(error, 'errorjmdbmvb');
+      });
+  }
 }
 
-export default FirebaseHelper
+export default FirebaseHelper;
